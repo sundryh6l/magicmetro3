@@ -81,102 +81,106 @@
 
   <script>
     let isPlaying = false;
-    let bpm = 120;
-    let sound = new Howl({
-        src: [],
-        volume: 1,
-        preload: true
-    });
-    let nextTickTime = 0;
-    let magicMode = false;
-    let minBpm, maxBpm;
-    let audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    let previousBpm = bpm; // Track the previous BPM
+let bpm = 120;
+let sound = new Howl({
+    src: [],
+    volume: 1,
+    preload: true
+});
+let nextTickTime = 0;
+let magicMode = false;
+let minBpm, maxBpm;
+let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let previousBpm = bpm; // Track the previous BPM
 
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const bpmSlider = document.getElementById('bpmSlider');
-    const bpmDisplay = document.getElementById('bpmDisplay');
-    const audioUpload = document.getElementById('audioUpload');
-    const magicBtn = document.getElementById('magicBtn');
-    const bpmButtonsContainer = document.getElementById('bpmButtonsContainer');
+let magicInterval; // Define a variable to store the interval ID
 
-    const bpmArray = [110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+const playPauseBtn = document.getElementById('playPauseBtn');
+const stopBtn = document.getElementById('stopBtn');
+const bpmSlider = document.getElementById('bpmSlider');
+const bpmDisplay = document.getElementById('bpmDisplay');
+const audioUpload = document.getElementById('audioUpload');
+const magicBtn = document.getElementById('magicBtn');
+const bpmButtonsContainer = document.getElementById('bpmButtonsContainer');
 
-    // Dynamically create BPM buttons
-    bpmArray.forEach(bpmValue => {
-        const button = document.createElement('button');
-        button.classList.add('bpm-button');
-        button.dataset.bpm = bpmValue;
-        button.textContent = `${bpmValue} BPM`;
-        bpmButtonsContainer.appendChild(button);
-    });
+const bpmArray = [110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
-    function scheduleNextTick(time) {
-        const secondsPerBeat = 60.0 / bpm;
-        nextTickTime += secondsPerBeat;
+// Dynamically create BPM buttons
+bpmArray.forEach(bpmValue => {
+    const button = document.createElement('button');
+    button.classList.add('bpm-button');
+    button.dataset.bpm = bpmValue;
+    button.textContent = `${bpmValue} BPM`;
+    bpmButtonsContainer.appendChild(button);
+});
 
-        sound.play();
+function scheduleNextTick(time) {
+    const secondsPerBeat = 60.0 / bpm;
+    nextTickTime += secondsPerBeat;
 
-        if (isPlaying) {
-            audioContext.resume().then(() => {
-                audioContext.currentTime = time;
-                const nextTickDelta = nextTickTime - audioContext.currentTime;
-                if (nextTickDelta > 0) {
-                    setTimeout(() => scheduleNextTick(audioContext.currentTime), nextTickDelta * 1000);
-                } else {
-                    scheduleNextTick(audioContext.currentTime);
-                }
-            });
-        }
+    sound.play();
+
+    if (isPlaying) {
+        audioContext.resume().then(() => {
+            audioContext.currentTime = time;
+            const nextTickDelta = nextTickTime - audioContext.currentTime;
+            if (nextTickDelta > 0) {
+                setTimeout(() => scheduleNextTick(audioContext.currentTime), nextTickDelta * 1000);
+            } else {
+                scheduleNextTick(audioContext.currentTime);
+            }
+        });
     }
+}
 
-    function startMetronome() {
-        if (!isPlaying) {
-            isPlaying = true;
-            audioContext.resume().then(() => {
-                nextTickTime = audioContext.currentTime;
-                scheduleNextTick(nextTickTime);
-            });
-        }
+function startMetronome() {
+    if (!isPlaying) {
+        isPlaying = true;
+        audioContext.resume().then(() => {
+            nextTickTime = audioContext.currentTime;
+            scheduleNextTick(nextTickTime);
+        });
     }
+}
 
-    function stopMetronome() {
-        isPlaying = false;
+function stopMetronome() {
+    isPlaying = false;
+}
+
+function checkMagicModeCondition() {
+    if (magicMode && previousBpm >= maxBpm && bpm < maxBpm) {
+        stopMagicMode();
     }
+    previousBpm = bpm; // Update previous BPM value
+}
 
-    function checkMagicModeCondition() {
-        if (magicMode && previousBpm >= maxBpm && bpm < maxBpm) {
-            stopMagicMode();
-        }
-        previousBpm = bpm; // Update previous BPM value
-    }
+function stopMagicMode() {
+    magicMode = false;
+    magicBtn.textContent = 'Magic';
+    clearInterval(magicInterval); // Clear the interval when stopping magic mode
+    stopMetronome();
+    playPauseBtn.textContent = 'Play'; // Reset the play button to 'Play'
+}
 
-    function stopMagicMode() {
-        magicMode = false;
-        magicBtn.textContent = 'Magic';
-        stopMetronome();
-        playPauseBtn.textContent = 'Play'; // Reset the play button to 'Play'
-    }
-
-    playPauseBtn.addEventListener('click', () => {
-        if (isPlaying) {
-            stopMetronome();
-            playPauseBtn.textContent = 'Play';
-        } else {
-            startMetronome();
-            playPauseBtn.textContent = 'Pause';
-        }
-    });
-
-    stopBtn.addEventListener('click', () => {
+playPauseBtn.addEventListener('click', () => {
+    if (isPlaying) {
         stopMetronome();
         playPauseBtn.textContent = 'Play';
-        magicMode = false;
-        magicBtn.textContent = 'Magic';
-    });
-    
-    const moveBtn = document.getElementById('moveBtn');
+    } else {
+        startMetronome();
+        playPauseBtn.textContent = 'Pause';
+    }
+});
+
+stopBtn.addEventListener('click', () => {
+    stopMetronome();
+    playPauseBtn.textContent = 'Play';
+    magicMode = false;
+    magicBtn.textContent = 'Magic';
+    clearInterval(magicInterval); // Ensure the interval is cleared
+});
+
+const moveBtn = document.getElementById('moveBtn');
 
 moveBtn.addEventListener('click', () => {
     const minBpmValue = parseFloat(document.getElementById('minBpm').value);
@@ -193,61 +197,60 @@ moveBtn.addEventListener('click', () => {
     }
 });
 
+bpmSlider.addEventListener('input', () => {
+    bpm = parseFloat(bpmSlider.value);
+    bpmDisplay.textContent = bpm.toFixed(2);
+    if (magicMode) {
+        checkMagicModeCondition();
+    }
+});
 
-    bpmSlider.addEventListener('input', () => {
-        bpm = parseFloat(bpmSlider.value);
-        bpmDisplay.textContent = bpm.toFixed(2);
-        if (magicMode) {
+audioUpload.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            sound = new Howl({
+                src: [e.target.result],
+                volume: 1,
+                preload: true
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+magicBtn.addEventListener('click', () => {
+    magicMode = !magicMode;
+    magicBtn.textContent = magicMode ? 'Stop Magic' : 'Magic';
+    
+    if (magicMode) {
+        minBpm = parseFloat(document.getElementById('minBpm').value) || 30;
+        maxBpm = parseFloat(document.getElementById('maxBpm').value) || 300;
+        
+        function magicStep() {
+            if (!magicMode) return;
+
+            if (Math.random() < 0.65) {
+                bpm = Math.min(bpm + 0.5, maxBpm);
+            } else {
+                bpm = Math.max(bpm - 0.5, minBpm);
+            }
+            bpmSlider.value = bpm;
+            bpmDisplay.textContent = bpm.toFixed(2);
+
+            // Check if the condition to stop magic mode is met
             checkMagicModeCondition();
         }
-    });
 
-    audioUpload.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                sound = new Howl({
-                    src: [e.target.result],
-                    volume: 1,
-                    preload: true
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+        // Start a single interval
+        magicInterval = setInterval(magicStep, 5000);
+    } else {
+        stopMagicMode(); // Ensure magic mode stops and updates the play button text
+    }
+});
 
-    magicBtn.addEventListener('click', () => {
-        magicMode = !magicMode;
-        magicBtn.textContent = magicMode ? 'Stop Magic' : 'Magic';
-        
-        if (magicMode) {
-            minBpm = parseFloat(document.getElementById('minBpm').value) || 30;
-            maxBpm = parseFloat(document.getElementById('maxBpm').value) || 300;
-            
-            function magicStep() {
-                if (!magicMode) return;
-
-                if (Math.random() < 0.65) {
-                    bpm = Math.min(bpm + 0.5, maxBpm);
-                } else {
-                    bpm = Math.max(bpm - 0.5, minBpm);
-                }
-                bpmSlider.value = bpm;
-                bpmDisplay.textContent = bpm.toFixed(2);
-
-                // Check if the condition to stop magic mode is met
-                checkMagicModeCondition();
-                
-                setTimeout(magicStep, 5000);
-            }
-            
-            magicStep();
-        } else {
-            stopMagicMode(); // Ensure magic mode stops and updates the play button text
-        }
-    });
-    const helpBtn = document.getElementById('helpBtn');
+const helpBtn = document.getElementById('helpBtn');
 const helpPopup = document.getElementById('helpPopup');
 
 helpBtn.addEventListener('click', () => {
@@ -260,49 +263,49 @@ helpPopup.addEventListener('click', (event) => {
     }
 });
 
+// Ultra-smooth BPM transition
+function smoothBpmTransition() {
+    const targetBpm = parseFloat(bpmSlider.value);
+    const diff = targetBpm - bpm;
+    if (Math.abs(diff) > 0.01) {
+        bpm += diff * 0.05;
+        bpmDisplay.textContent = bpm.toFixed(2);
+        requestAnimationFrame(smoothBpmTransition);
+    } else {
+        bpm = targetBpm;
+        bpmDisplay.textContent = bpm.toFixed(2);
+    }
+}
 
-    // Ultra-smooth BPM transition
-    function smoothBpmTransition() {
-        const targetBpm = parseFloat(bpmSlider.value);
-        const diff = targetBpm - bpm;
-        if (Math.abs(diff) > 0.01) {
-            bpm += diff * 0.05;
-            bpmDisplay.textContent = bpm.toFixed(2);
-            requestAnimationFrame(smoothBpmTransition);
-        } else {
-            bpm = targetBpm;
-            bpmDisplay.textContent = bpm.toFixed(2);
+bpmSlider.addEventListener('input', smoothBpmTransition);
+
+// Ensure smooth playback during BPM changes
+setInterval(() => {
+    if (isPlaying) {
+        const currentTime = audioContext.currentTime;
+        const timeSinceLastTick = currentTime - nextTickTime;
+        const secondsPerBeat = 60.0 / bpm;
+        
+        if (timeSinceLastTick >= secondsPerBeat) {
+            nextTickTime = currentTime;
+            scheduleNextTick(currentTime);
         }
     }
+}, 10);
 
-    bpmSlider.addEventListener('input', smoothBpmTransition);
-
-    // Ensure smooth playback during BPM changes
-    setInterval(() => {
+// Set up BPM buttons
+bpmButtonsContainer.addEventListener('click', (event) => {
+    if (event.target.classList.contains('bpm-button')) {
+        bpm = parseFloat(event.target.getAttribute('data-bpm'));
+        bpmSlider.value = bpm;
+        bpmDisplay.textContent = bpm.toFixed(2);
         if (isPlaying) {
-            const currentTime = audioContext.currentTime;
-            const timeSinceLastTick = currentTime - nextTickTime;
-            const secondsPerBeat = 60.0 / bpm;
-            
-            if (timeSinceLastTick >= secondsPerBeat) {
-                nextTickTime = currentTime;
-                scheduleNextTick(currentTime);
-            }
+            stopMetronome();
+            startMetronome();
         }
-    }, 10);
+    }
+});
 
-    // Set up BPM buttons
-    bpmButtonsContainer.addEventListener('click', (event) => {
-        if (event.target.classList.contains('bpm-button')) {
-            bpm = parseFloat(event.target.getAttribute('data-bpm'));
-            bpmSlider.value = bpm;
-            bpmDisplay.textContent = bpm.toFixed(2);
-            if (isPlaying) {
-                stopMetronome();
-                startMetronome();
-            }
-        }
-    });
 </script>
 
 
