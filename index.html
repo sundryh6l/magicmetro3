@@ -16,6 +16,13 @@
             grid-template-columns: repeat(5, 1fr);
             gap: 10px;
         }
+        /* Ensure the popup is centered and covers the screen */
+#helpPopup {
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+}
+
     </style>
 </head>
 <body class="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center">
@@ -40,14 +47,32 @@
             <input type="file" id="audioUpload" accept=".wav,.mp3" class="w-full text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
         </div>
 
-        <div class="mb-6 flex flex-col items-center space-y-2">
-            <h2 class="text-xl font-semibold mb-2 text-gray-800">Magic Mode</h2>
-            <div class="flex space-x-2 mb-2">
-                <input type="number" id="minBpm" placeholder="Min BPM" class="border rounded-lg px-3 py-2 w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <input type="number" id="maxBpm" placeholder="Max BPM" class="border rounded-lg px-3 py-2 w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-400">
-            </div>
-            <button id="magicBtn" class="bg-purple-500 text-white px-4 py-2 rounded-lg w-full hover:bg-purple-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400">Magic</button>
-        </div>
+     <div class="mb-6 flex flex-col items-center space-y-2 relative">
+    <h2 class="text-xl font-semibold mb-2 text-gray-800">Magic Mode</h2>
+    <div class="flex space-x-2 mb-2">
+        <input type="number" id="minBpm" placeholder="Min BPM" class="border rounded-lg px-3 py-2 w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input type="number" id="maxBpm" placeholder="Max BPM" class="border rounded-lg px-3 py-2 w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    </div>
+    <button id="magicBtn" class="bg-purple-500 text-white px-4 py-2 rounded-lg w-full hover:bg-purple-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400">Magic</button>
+
+    <!-- "?" Button -->
+    <button id="helpBtn" class="absolute top-0 right-0 bg-gray-300 text-gray-800 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-400 transition duration-300 focus:outline-none">?</button>
+</div>
+
+<!-- Pop-up Message -->
+<div id="helpPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-4 rounded-lg shadow-lg max-w-xs text-center">
+        <h3 class="text-lg font-semibold mb-4">Steps to Magic Mode</h3>
+        <ul class="list-decimal list-inside text-left space-y-2">
+            <li>Enter min/max values</li>
+            <li>Press Stop button</li>
+            <li>Press Move button</li>
+            <li>Press Magic button</li>
+            <li>Press Play button</li>
+        </ul>
+    </div>
+</div>
+
 
         <div class="mb-6 flex flex-wrap justify-center gap-2" id="bpmButtonsContainer">
             <!-- Buttons will be dynamically inserted here -->
@@ -222,6 +247,19 @@ moveBtn.addEventListener('click', () => {
             stopMagicMode(); // Ensure magic mode stops and updates the play button text
         }
     });
+    const helpBtn = document.getElementById('helpBtn');
+const helpPopup = document.getElementById('helpPopup');
+
+helpBtn.addEventListener('click', () => {
+    helpPopup.style.display = 'flex';
+});
+
+helpPopup.addEventListener('click', (event) => {
+    if (event.target === helpPopup) {
+        helpPopup.style.display = 'none';
+    }
+});
+
 
     // Ultra-smooth BPM transition
     function smoothBpmTransition() {
