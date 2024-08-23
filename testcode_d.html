@@ -80,12 +80,10 @@
     </div>
 
   <script>
-
-
 let isPlaying = false;
 let bpm = 120;
 let sound = new Howl({
-    src: [],
+    src: [], // Metronome sound file
     volume: 1,
     preload: true
 });
@@ -94,9 +92,9 @@ let magicMode = false;
 let minBpm, maxBpm;
 let audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let previousBpm = bpm; // Track the previous BPM
-let conditionAprilTimer;
-let magicInterval; // Define magicInterval as a global variable
-let magicModeWasActive = false; // Track if magic mode was active when play was pressed
+
+let magicInterval; // Define a variable to store the interval ID
+let conditionAprilTimer = null; // Variable to store conditionApril timer
 
 const playPauseBtn = document.getElementById('playPauseBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -105,9 +103,12 @@ const bpmDisplay = document.getElementById('bpmDisplay');
 const audioUpload = document.getElementById('audioUpload');
 const magicBtn = document.getElementById('magicBtn');
 const bpmButtonsContainer = document.getElementById('bpmButtonsContainer');
+const helpBtn = document.getElementById('helpBtn');
+const helpPopup = document.getElementById('helpPopup');
+
+const bpmArray = [110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
 // Dynamically create BPM buttons
-const bpmArray = [110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 bpmArray.forEach(bpmValue => {
     const button = document.createElement('button');
     button.classList.add('bpm-button');
@@ -164,55 +165,51 @@ function stopMagicMode() {
     playPauseBtn.textContent = 'Play'; // Reset the play button to 'Play'
 }
 
-function playConditionAprilSound() {
-    const sound = new Howl({
-        src: ['https://magicmetro3.vercel.app/ding-126626.mp3'],
-        volume: 1,
-        onloaderror: () => alert('Error playing sound file.')
+function playBeep() {
+    const audio = new Audio('https://magicmetro3.vercel.app/ding-126626.mp3');
+    audio.play().catch(error => {
+        console.error('Error playing the sound file:', error);
+        alert('Error playing the sound file for conditionApril.');
     });
-    sound.play();
 }
 
-function conditionApril() {
-    // Only trigger if magic mode is active and play button is pressed
-    if (isPlaying && magicMode && magicBtn.textContent === 'Stop Magic') {
-        console.log('Condition April triggered: Magic mode is active.');
-
-        // Clear any previous timer
-        if (conditionAprilTimer) {
-            clearInterval(conditionAprilTimer);
-        }
-
-        conditionAprilTimer = setInterval(() => {
-            if (!magicMode) {
-                playConditionAprilSound();
-
-                setTimeout(() => {
-                    console.log('Performing programmatic button presses.');
-                    // Simulate button presses
-                    magicBtn.click(); // Trigger the magic button
-                    setTimeout(() => {
-                        playPauseBtn.click(); // Trigger the play button
-                    }, 0);
-                }, 3000); // 3-second delay
-
-                clearInterval(conditionAprilTimer); // Clear the timer after executing
-            }
-        }, 35000); // 35-second timer
+function checkConditionApril() {
+    // Clear any existing timer
+    if (conditionAprilTimer) {
+        clearInterval(conditionAprilTimer);
     }
+
+    // Set up the conditionApril check
+    conditionAprilTimer = setInterval(() => {
+        if (!isPlaying && magicBtn.textContent === 'Stop Magic') {
+            // Start a timer for 35 seconds
+            setTimeout(() => {
+                if (!magicMode) {
+                    playBeep();
+                    clearInterval(conditionAprilTimer); // Clear the timer if the condition is met
+
+                    // Ensure a 3-second delay before programmatically pressing buttons
+                    setTimeout(() => {
+                        magicBtn.click(); // Press the magic button
+                        playPauseBtn.click(); // Press the play button
+                    }, 3000); // 3 seconds delay
+                }
+           // }, 35000); // 35 seconds delay
+            }, 8000); // 8 seconds delay
+        }
+    }, 1000); // Check every second
 }
 
+// Add the conditionApril check when play button is pressed
 playPauseBtn.addEventListener('click', () => {
     if (isPlaying) {
         stopMetronome();
         playPauseBtn.textContent = 'Play';
-        magicModeWasActive = magicMode; // Track if magic mode was active when stopping
+        clearInterval(conditionAprilTimer); // Clear any existing timer
     } else {
         startMetronome();
         playPauseBtn.textContent = 'Pause';
-        if (magicModeWasActive) {
-            conditionApril(); // Check the condition whenever play is pressed if magic mode was active
-        }
+        checkConditionApril(); // Start checking for conditionApril when play button is pressed
     }
 });
 
@@ -222,6 +219,7 @@ stopBtn.addEventListener('click', () => {
     magicMode = false;
     magicBtn.textContent = 'Magic';
     clearInterval(magicInterval); // Ensure the interval is cleared
+    clearInterval(conditionAprilTimer); // Clear any existing timer
 });
 
 const moveBtn = document.getElementById('moveBtn');
@@ -290,14 +288,9 @@ magicBtn.addEventListener('click', () => {
         // Start a single interval
         magicInterval = setInterval(magicStep, 5000);
     } else {
-        magicModeWasActive = false; // Reset magic mode flag
         stopMagicMode(); // Ensure magic mode stops and updates the play button text
-        clearInterval(conditionAprilTimer); // Clear conditionApril timer if magic mode stops
     }
 });
-
-const helpBtn = document.getElementById('helpBtn');
-const helpPopup = document.getElementById('helpPopup');
 
 helpBtn.addEventListener('click', () => {
     helpPopup.style.display = 'flex';
@@ -342,7 +335,7 @@ setInterval(() => {
 // Set up BPM buttons
 bpmButtonsContainer.addEventListener('click', (event) => {
     if (event.target.classList.contains('bpm-button')) {
-        bpm = parseFloat(event.target.dataset.bpm);
+        bpm = parseFloat(event.target.getAttribute('data-bpm'));
         bpmSlider.value = bpm;
         bpmDisplay.textContent = bpm.toFixed(2);
         if (isPlaying) {
