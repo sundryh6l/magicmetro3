@@ -308,37 +308,51 @@ bpmButtonsContainer.addEventListener('click', (event) => {
 
 
 function conditionApril() {
-    const timer = setInterval(() => {
-        if (!magicMode) {
-            playConditionAprilSound();
+    let mainTimer = null;
 
-            clearInterval(timer); // Clear the main timer if the condition is met
+    playPauseBtn.addEventListener('click', () => {
+        if (playPauseBtn.innerText === 'Pause' && magicBtn.innerText === 'Stop Magic') {
+            // Start the 35-second timer
+            if (!mainTimer) {
+                mainTimer = setInterval(() => {
+                    if (!magicMode) {
+                        playConditionAprilSound();
 
-            // Introduce a 3-second delay using setInterval
-            let delay = 0;
-            const delayInterval = setInterval(() => {
-                delay += 1000; // Increment delay by 1 second
+                        clearInterval(mainTimer); // Clear the main timer once the condition is met
+                        mainTimer = null; // Reset the timer variable
 
-                if (delay >= 3000) { // Check if 3 seconds have passed
-                    clearInterval(delayInterval); // Clear the delay interval
+                        // Introduce a 3-second delay using setInterval
+                        let delay = 0;
+                        const delayInterval = setInterval(() => {
+                            delay += 1000; // Increment delay by 1 second
 
-                    // Programmatically press the magic button
-                    magicBtn.click();
+                            if (delay >= 3000) { // Check if 3 seconds have passed
+                                clearInterval(delayInterval); // Clear the delay interval
 
-                    // Start another small interval for a slight delay before pressing the play button
-                    let playDelay = 0;
-                    const playDelayInterval = setInterval(() => {
-                        playDelay += 100;
+                                // Programmatically press the magic button
+                                magicBtn.click();
 
-                        if (playDelay >= 100) {
-                            clearInterval(playDelayInterval); // Clear this interval
-                            playPauseBtn.click(); // Programmatically press the play button
-                        }
-                    }, 100);
-                }
-            }, 1000); // 1-second intervals to simulate a 3-second delay
+                                // Start another small interval for a slight delay before pressing the play button
+                                let playDelay = 0;
+                                const playDelayInterval = setInterval(() => {
+                                    playDelay += 100;
+
+                                    if (playDelay >= 100) {
+                                        clearInterval(playDelayInterval); // Clear this interval
+                                        playPauseBtn.click(); // Programmatically press the play button
+                                    }
+                                }, 100);
+                            }
+                        }, 1000); // 1-second intervals to simulate a 3-second delay
+                    }
+                }, 8000); // 8-second timer
+            }
+        } else {
+            // Clear the timer if Play button is toggled to 'Play' or Magic mode is off
+            clearInterval(mainTimer);
+            mainTimer = null;
         }
-    }, 8000); // 8-second timer
+    });
 }
 
 
