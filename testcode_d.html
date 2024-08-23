@@ -80,10 +80,12 @@
     </div>
 
   <script>
+
+    
 let isPlaying = false;
 let bpm = 120;
 let sound = new Howl({
-    src: [], // Metronome sound file
+    src: [],
     volume: 1,
     preload: true
 });
@@ -91,10 +93,9 @@ let nextTickTime = 0;
 let magicMode = false;
 let minBpm, maxBpm;
 let audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let previousBpm = bpm; // Track the previous BPM
-
-let magicInterval; // Define a variable to store the interval ID
-let conditionAprilTimer = null; // Variable to store conditionApril timer
+let previousBpm = bpm;
+let conditionAprilTimer; // Global variable for conditionApril timer
+let magicModeStoppedByConditionApril = false; // Flag to differentiate stopping reasons
 
 const playPauseBtn = document.getElementById('playPauseBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -103,8 +104,6 @@ const bpmDisplay = document.getElementById('bpmDisplay');
 const audioUpload = document.getElementById('audioUpload');
 const magicBtn = document.getElementById('magicBtn');
 const bpmButtonsContainer = document.getElementById('bpmButtonsContainer');
-const helpBtn = document.getElementById('helpBtn');
-const helpPopup = document.getElementById('helpPopup');
 
 const bpmArray = [110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 
@@ -138,6 +137,7 @@ function scheduleNextTick(time) {
 
 function startMetronome() {
     if (!isPlaying) {
+        console.log('Starting metronome...');
         isPlaying = true;
         audioContext.resume().then(() => {
             nextTickTime = audioContext.currentTime;
@@ -147,6 +147,7 @@ function startMetronome() {
 }
 
 function stopMetronome() {
+    console.log('Stopping metronome...');
     isPlaying = false;
 }
 
@@ -158,58 +159,67 @@ function checkMagicModeCondition() {
 }
 
 function stopMagicMode() {
+    console.log('Stopping magic mode...');
     magicMode = false;
     magicBtn.textContent = 'Magic';
     clearInterval(magicInterval); // Clear the interval when stopping magic mode
     stopMetronome();
     playPauseBtn.textContent = 'Play'; // Reset the play button to 'Play'
+
+    // Set the flag to indicate magic mode was stopped due to conditionApril
+    if (magicModeStoppedByConditionApril) {
+        magicModeStoppedByConditionApril = false; // Reset flag
+    }
 }
 
-function playBeep() {
-    const audio = new Audio('https://magicmetro3.vercel.app/ding-126626.mp3');
-    audio.play().catch(error => {
-        console.error('Error playing the sound file:', error);
-        alert('Error playing the sound file for conditionApril.');
+function playConditionAprilSound() {
+    const aprilSound = new Howl({
+        src: ['https://magicmetro3.vercel.app/ding-126626.mp3'],
+        volume: 1,
+        onloaderror: (id, error) => {
+            alert('Error playing conditionApril sound.');
+            console.error('Error playing conditionApril sound:', error);
+        }
     });
+    aprilSound.play();
 }
 
 function checkConditionApril() {
-    // Clear any existing timer
-    if (conditionAprilTimer) {
-        clearInterval(conditionAprilTimer);
+    console.log('Checking conditionApril...');
+    if (magicMode === false) {
+        playConditionAprilSound(); // Play the sound when conditionApril is met
+
+        setTimeout(() => {
+            console.log('3-second delay complete, pressing buttons...');
+            if (!isPlaying) { // Ensure metronome is not playing before programmatically clicking buttons
+                magicBtn.click(); // Programmatically click the Magic button
+                playPauseBtn.click(); // Programmatically click the Play button
+            }
+        }, 3000);
+
+        clearInterval(conditionAprilTimer); // Clear the interval after triggering the condition
+        magicModeStoppedByConditionApril = true; // Set flag to indicate conditionApril triggered the stop
     }
-
-    // Set up the conditionApril check
-    conditionAprilTimer = setInterval(() => {
-        if (!isPlaying && magicBtn.textContent === 'Stop Magic') {
-            // Start a timer for 35 seconds
-            setTimeout(() => {
-                if (!magicMode) {
-                    playBeep();
-                    clearInterval(conditionAprilTimer); // Clear the timer if the condition is met
-
-                    // Ensure a 3-second delay before programmatically pressing buttons
-                    setTimeout(() => {
-                        magicBtn.click(); // Press the magic button
-                        playPauseBtn.click(); // Press the play button
-                    }, 3000); // 3 seconds delay
-                }
-           // }, 35000); // 35 seconds delay
-            }, 8000); // 8 seconds delay
-        }
-    }, 1000); // Check every second
 }
 
-// Add the conditionApril check when play button is pressed
 playPauseBtn.addEventListener('click', () => {
     if (isPlaying) {
         stopMetronome();
         playPauseBtn.textContent = 'Play';
-        clearInterval(conditionAprilTimer); // Clear any existing timer
+        clearInterval(conditionAprilTimer); // Clear any existing timer when metronome is stopped
     } else {
         startMetronome();
         playPauseBtn.textContent = 'Pause';
-        checkConditionApril(); // Start checking for conditionApril when play button is pressed
+
+        // Set the conditionApril timer only if the magic button is on
+        if (magicMode) {
+            clearInterval(conditionAprilTimer); // Clear any existing timer
+            conditionAprilTimer = setInterval(() => {
+                if (magicMode === false && !magicModeStoppedByConditionApril) {
+                    checkConditionApril(); // Check condition and act
+                }
+            }, 8000); // 8 seconds interval
+        }
     }
 });
 
@@ -218,8 +228,8 @@ stopBtn.addEventListener('click', () => {
     playPauseBtn.textContent = 'Play';
     magicMode = false;
     magicBtn.textContent = 'Magic';
-    clearInterval(magicInterval); // Ensure the interval is cleared
-    clearInterval(conditionAprilTimer); // Clear any existing timer
+    clearInterval(conditionAprilTimer); // Clear the interval when stopping the metronome
+    magicModeStoppedByConditionApril = false; // Reset the flag when manually stopping
 });
 
 const moveBtn = document.getElementById('moveBtn');
@@ -291,6 +301,9 @@ magicBtn.addEventListener('click', () => {
         stopMagicMode(); // Ensure magic mode stops and updates the play button text
     }
 });
+
+const helpBtn = document.getElementById('helpBtn');
+const helpPopup = document.getElementById('helpPopup');
 
 helpBtn.addEventListener('click', () => {
     helpPopup.style.display = 'flex';
