@@ -81,6 +81,7 @@
 
   <script>
 
+
 let isPlaying = false;
 let bpm = 120;
 let sound = new Howl({
@@ -94,6 +95,7 @@ let minBpm, maxBpm;
 let audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let previousBpm = bpm; // Track the previous BPM
 let conditionAprilTimer;
+let magicInterval; // Define magicInterval as a global variable
 let magicModeWasActive = false; // Track if magic mode was active when play was pressed
 
 const playPauseBtn = document.getElementById('playPauseBtn');
@@ -104,9 +106,8 @@ const audioUpload = document.getElementById('audioUpload');
 const magicBtn = document.getElementById('magicBtn');
 const bpmButtonsContainer = document.getElementById('bpmButtonsContainer');
 
-const bpmArray = [110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
-
 // Dynamically create BPM buttons
+const bpmArray = [110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 bpmArray.forEach(bpmValue => {
     const button = document.createElement('button');
     button.classList.add('bpm-button');
@@ -341,7 +342,7 @@ setInterval(() => {
 // Set up BPM buttons
 bpmButtonsContainer.addEventListener('click', (event) => {
     if (event.target.classList.contains('bpm-button')) {
-        bpm = parseFloat(event.target.getAttribute('data-bpm'));
+        bpm = parseFloat(event.target.dataset.bpm);
         bpmSlider.value = bpm;
         bpmDisplay.textContent = bpm.toFixed(2);
         if (isPlaying) {
@@ -350,8 +351,6 @@ bpmButtonsContainer.addEventListener('click', (event) => {
         }
     }
 });
-
-
 
 
     
