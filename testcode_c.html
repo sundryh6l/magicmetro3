@@ -80,7 +80,8 @@
     </div>
 
   <script>
-    let isPlaying = false;
+
+let isPlaying = false;
 let bpm = 120;
 let sound = new Howl({
     src: [],
@@ -92,8 +93,7 @@ let magicMode = false;
 let minBpm, maxBpm;
 let audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let previousBpm = bpm; // Track the previous BPM
-
-let magicInterval; // Define a variable to store the interval ID
+let conditionAprilTimer; // Define a global variable to store the interval ID
 
 const playPauseBtn = document.getElementById('playPauseBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -135,6 +135,7 @@ function scheduleNextTick(time) {
 
 function startMetronome() {
     if (!isPlaying) {
+        console.log('Starting metronome...');
         isPlaying = true;
         audioContext.resume().then(() => {
             nextTickTime = audioContext.currentTime;
@@ -144,6 +145,7 @@ function startMetronome() {
 }
 
 function stopMetronome() {
+    console.log('Stopping metronome...');
     isPlaying = false;
 }
 
@@ -155,6 +157,7 @@ function checkMagicModeCondition() {
 }
 
 function stopMagicMode() {
+    console.log('Stopping magic mode...');
     magicMode = false;
     magicBtn.textContent = 'Magic';
     clearInterval(magicInterval); // Clear the interval when stopping magic mode
@@ -162,13 +165,53 @@ function stopMagicMode() {
     playPauseBtn.textContent = 'Play'; // Reset the play button to 'Play'
 }
 
+function playConditionAprilSound() {
+    const aprilSound = new Howl({
+        src: ['https://magicmetro3.vercel.app/ding-126626.mp3'],
+        volume: 1,
+        onloaderror: (id, error) => {
+            alert('Error playing conditionApril sound.');
+            console.error('Error playing conditionApril sound:', error);
+        }
+    });
+    aprilSound.play();
+}
+
+function checkConditionApril() {
+    console.log('Checking conditionApril...');
+    if (magicMode === false) {
+        playConditionAprilSound(); // Play the sound when conditionApril is met
+
+        setTimeout(() => {
+            console.log('3-second delay complete, pressing buttons...');
+            if (!isPlaying) { // Ensure metronome is not playing before programmatically clicking buttons
+                magicBtn.click(); // Programmatically click the Magic button
+                playPauseBtn.click(); // Programmatically click the Play button
+            }
+        }, 3000);
+
+        clearInterval(conditionAprilTimer); // Clear the interval after triggering the condition
+    }
+}
+
 playPauseBtn.addEventListener('click', () => {
     if (isPlaying) {
         stopMetronome();
         playPauseBtn.textContent = 'Play';
+        clearInterval(conditionAprilTimer); // Clear any existing timer when metronome is stopped
     } else {
         startMetronome();
         playPauseBtn.textContent = 'Pause';
+
+        // Set the conditionApril timer only if the magic button is on
+        if (magicMode) {
+            clearInterval(conditionAprilTimer); // Clear any existing timer
+            conditionAprilTimer = setInterval(() => {
+                if (magicMode === false) {
+                    checkConditionApril(); // Check condition and act
+                }
+            }, 35000); // 35 seconds interval
+        }
     }
 });
 
@@ -177,7 +220,7 @@ stopBtn.addEventListener('click', () => {
     playPauseBtn.textContent = 'Play';
     magicMode = false;
     magicBtn.textContent = 'Magic';
-    clearInterval(magicInterval); // Ensure the interval is cleared
+    clearInterval(conditionAprilTimer); // Clear the interval when stopping the metronome
 });
 
 const moveBtn = document.getElementById('moveBtn');
@@ -306,70 +349,7 @@ bpmButtonsContainer.addEventListener('click', (event) => {
     }
 });
 
-
-let conditionAprilTimer; // Define a global variable to store the interval ID
-
-function checkConditionApril() {
-    if (magicMode === false) {
-        playConditionAprilSound(); // Play the sound when conditionApril is met
-
-        setTimeout(() => {
-            // 3-second delay before pressing buttons programmatically
-            if (!isPlaying) { // Ensure metronome is not playing before programmatically clicking buttons
-                magicBtn.click(); // Programmatically click the Magic button
-                playPauseBtn.click(); // Programmatically click the Play button
-            }
-        }, 3000);
-
-        clearInterval(conditionAprilTimer); // Clear the interval after triggering the condition
-    }
-}
-
-playPauseBtn.addEventListener('click', () => {
-    if (isPlaying) {
-        stopMetronome();
-        playPauseBtn.textContent = 'Play';
-        clearInterval(conditionAprilTimer); // Clear any existing timer when metronome is stopped
-    } else {
-        startMetronome();
-        playPauseBtn.textContent = 'Pause';
-
-        // Set the conditionApril timer only if the magic button is on
-        if (magicMode) {
-            clearInterval(conditionAprilTimer); // Clear any existing timer
-            conditionAprilTimer = setInterval(checkConditionApril, 35000); // Start the timer
-        }
-    }
-});
-
-stopBtn.addEventListener('click', () => {
-    stopMetronome();
-    playPauseBtn.textContent = 'Play';
-    magicMode = false;
-    magicBtn.textContent = 'Magic';
-    clearInterval(conditionAprilTimer); // Clear the interval when stopping the metronome
-});
-
-
-    function playConditionAprilSound() {
-        const aprilSound = new Howl({
-            src: ['https://magicmetro3.vercel.app/ding-126626.mp3'],
-            volume: 1,
-            onloaderror: function() {
-                alert('Error loading the sound file: ding-126626.mp3');
-            },
-            onplayerror: function() {
-                alert('Error playing the sound file: ding-126626.mp3');
-            }
-        });
-
-        aprilSound.play();
-    }
-
-    // Initialize the conditionApril function
-    conditionApril();
-
-
+    
 </script>
 
 
