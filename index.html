@@ -80,7 +80,9 @@
     </div>
 
   <script>
-    let isPlaying = false;
+
+
+let isPlaying = false;
 let bpm = 120;
 let sound = new Howl({
     src: [],
@@ -148,7 +150,11 @@ function stopMetronome() {
 }
 
 function checkMagicModeCondition() {
-    if (magicMode && previousBpm >= maxBpm && bpm < maxBpm) {
+    // Log the values for debugging
+    console.log(`Checking magic mode condition: magicMode = ${magicMode}, previousBpm = ${previousBpm}, bpm = ${bpm}`);
+
+    if (magicMode && previousBpm >= maxBpm && bpm < previousBpm) {
+        console.log(`Stopping magic mode due to BPM decrease after reaching maxBpm`);
         stopMagicMode();
     }
     previousBpm = bpm; // Update previous BPM value
@@ -228,9 +234,12 @@ magicBtn.addEventListener('click', () => {
         minBpm = parseFloat(document.getElementById('minBpm').value) || 30;
         maxBpm = parseFloat(document.getElementById('maxBpm').value) || 300;
         
+        previousBpm = bpm; // Initialize previousBpm for magic mode
+
         function magicStep() {
             if (!magicMode) return;
 
+            const prevBpm = bpm; // Log previous BPM for comparison
             if (Math.random() < 0.65) {
                 bpm = Math.min(bpm + 0.5, maxBpm);
             } else {
@@ -239,11 +248,12 @@ magicBtn.addEventListener('click', () => {
             bpmSlider.value = bpm;
             bpmDisplay.textContent = bpm.toFixed(2);
 
-            // Check if the condition to stop magic mode is met
+            console.log(`Magic step: previousBpm = ${prevBpm}, newBpm = ${bpm}`);
+
             checkMagicModeCondition();
         }
 
-        // Start a single interval
+        // Start the magic step interval
         magicInterval = setInterval(magicStep, 5000);
     } else {
         stopMagicMode(); // Ensure magic mode stops and updates the play button text
@@ -305,6 +315,8 @@ bpmButtonsContainer.addEventListener('click', (event) => {
         }
     }
 });
+
+    
 
 </script>
 
