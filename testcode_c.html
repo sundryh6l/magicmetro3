@@ -315,8 +315,10 @@ function checkConditionApril() {
 
         setTimeout(() => {
             // 3-second delay before pressing buttons programmatically
-            magicBtn.click(); // Programmatically click the Magic button
-            playPauseBtn.click(); // Programmatically click the Play button
+            if (!isPlaying) { // Ensure metronome is not playing before programmatically clicking buttons
+                magicBtn.click(); // Programmatically click the Magic button
+                playPauseBtn.click(); // Programmatically click the Play button
+            }
         }, 3000);
 
         clearInterval(conditionAprilTimer); // Clear the interval after triggering the condition
@@ -327,6 +329,7 @@ playPauseBtn.addEventListener('click', () => {
     if (isPlaying) {
         stopMetronome();
         playPauseBtn.textContent = 'Play';
+        clearInterval(conditionAprilTimer); // Clear any existing timer when metronome is stopped
     } else {
         startMetronome();
         playPauseBtn.textContent = 'Pause';
@@ -346,7 +349,6 @@ stopBtn.addEventListener('click', () => {
     magicBtn.textContent = 'Magic';
     clearInterval(conditionAprilTimer); // Clear the interval when stopping the metronome
 });
-
 
 
     function playConditionAprilSound() {
